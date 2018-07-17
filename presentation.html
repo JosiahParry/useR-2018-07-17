@@ -497,6 +497,8 @@ get_sentiments("bing")
 
 ## Sentiment lexicons
 
+* Lexicons don't take into account qualifiers (i.e. no, not, etc.)
+
 .pull-left[
 
 ```r
@@ -917,7 +919,8 @@ album_sentiment %&gt;%
 
 `$$idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$$`
 
-tf-idf is about comparing **documents** within a **collection**.
+* `tf-idf` is about comparing **documents** within a **collection**.
+* Identifies tokens that are important, but not too common!
 
 ---
 
@@ -935,7 +938,9 @@ tf-idf is about comparing **documents** within a **collection**.
 ## Finding `tf-idf`
 
 ```r
-album_tf_idf &lt;- album_words %&gt;% 
+album_tf_idf &lt;- albums %&gt;%
+  unnest_tokens(word, lyric) %&gt;% 
+  count(artist, word) %&gt;% 
   bind_tf_idf(word, artist, n) %&gt;% 
   arrange(-tf_idf)
 
@@ -944,14 +949,14 @@ head(album_tf_idf)
 
 ```
 ## # A tibble: 6 x 6
-##   artist  word        n      tf   idf  tf_idf
-##   &lt;chr&gt;   &lt;chr&gt;   &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Beyonce slay       49 0.0205  1.10  0.0226 
-## 2 Beyonce okay       42 0.0176  1.10  0.0193 
-## 3 Beyonce sorry      35 0.0147  1.10  0.0161 
-## 4 Beyonce daddy      27 0.0113  1.10  0.0124 
-## 5 Beyonce oh         67 0.0281  0.405 0.0114 
-## 6 Beyonce freedom    21 0.00880 1.10  0.00967
+##   artist  word      n      tf   idf  tf_idf
+##   &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Beyonce she      53 0.0115  1.10  0.0127 
+## 2 Beyonce slay     49 0.0107  1.10  0.0117 
+## 3 Beyonce okay     42 0.00913 1.10  0.0100 
+## 4 Beyonce sorry    35 0.00761 1.10  0.00836
+## 5 Beyonce daddy    27 0.00587 1.10  0.00645
+## 6 Beyonce oh       67 0.0146  0.405 0.00591
 ```
 
 ---

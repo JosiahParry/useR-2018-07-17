@@ -309,6 +309,8 @@ get_sentiments("bing")
 
 ## Sentiment lexicons
 
+* Lexicons don't take into account qualifiers (i.e. no, not, etc.)
+
 .pull-left[
 ```{r}
 get_sentiments("nrc")
@@ -512,7 +514,8 @@ album_sentiment %>%
 
 $$idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$$
 
-tf-idf is about comparing **documents** within a **collection**.
+* `tf-idf` is about comparing **documents** within a **collection**.
+* Identifies tokens that are important, but not too common!
 
 ---
 
@@ -529,7 +532,9 @@ tf-idf is about comparing **documents** within a **collection**.
 
 ## Finding `tf-idf`
 ```{r}
-album_tf_idf <- album_words %>% 
+album_tf_idf <- albums %>%
+  unnest_tokens(word, lyric) %>% 
+  count(artist, word) %>% 
   bind_tf_idf(word, artist, n) %>% 
   arrange(-tf_idf)
 
