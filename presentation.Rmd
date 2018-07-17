@@ -1,0 +1,577 @@
+---
+title: "Tidy Lyrical Analysis"
+subtitle: "An introduction to Tidytext through geniusR"
+author: "Josiah Parry"
+date: "2018/07/15"
+output:
+  xaringan::moon_reader:
+    css: ["robot", "robot-fonts"]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+
+```{r packages, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(tidyverse)
+library(geniusR)
+library(tidytext)
+```
+
+
+```{r setup, include=FALSE}
+# R options
+options(
+  htmltools.dir.version = FALSE, # for blogdown
+  show.signif.stars = FALSE,     # for regression output
+  warm = 1
+  )
+# Set dpi and height for images
+opts_chunk$set(fig.height = 2.5, fig.width = 5, dpi = 300) 
+# ggplot2 color palette with gray
+color_palette <- list(gray = "#999999", 
+                      salmon = "#E69F00", 
+                      lightblue = "#56B4E9", 
+                      green = "#009E73", 
+                      yellow = "#F0E442", 
+                      darkblue = "#0072B2", 
+                      red = "#D55E00", 
+                      purple = "#CC79A7")
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+# For magick
+dev.off <- function(){
+  invisible(grDevices::dev.off())
+}
+
+ggthemr::ggthemr("fresh")
+# Create the theme
+my_theme <- function() {
+  theme_minimal() +
+    theme(
+      strip.text = element_text(hjust = .9, face = "bold", size = 10,
+                                margin = margin(b = 10)),
+      axis.text = element_text(size = 8),
+      axis.title.y = element_text(margin = margin(r = 12), face = "bold", angle = 90),
+      plot.title = element_text(hjust  = 0, vjust = 1, face = "bold", size = 18),
+      panel.spacing.x = unit(1, "lines"),
+      legend.position="bottom"
+    )
+}
+
+```
+
+## Talk Overview
+
+
+* Who I am
+* What does it mean to be tidy
+* `geniusR`
+* `tidytext`
+* Tidytext Analysis With geniusR
+* Give it a go!
+  - Workshopping tidy text analysis
+
+
+---
+background-image: url("static/wererising.jpg")
+background-position: bottom
+background-size: contain
+background-transparency: 50%
+
+## Some things about me
+
+
+* Plymouth State '18, Sociology, GIS, Math 
+* Esspresso connoisseur
+* NH Data Manager @ NextGen America #youthvote
+  - Remember to vote Nov. 6th!
+* MS Urban Informatics at Northeastern in September
+  
+---
+
+## What does it mean to be tidy?
+
+* I will refer you to [this beautiful paper](https://vita.had.co.nz/papers/tidy-data.pdf) by Hadley Wickham
+* The short of it is that:
+  - Each variable is a column
+  - Each observation is a row
+  - Each type of observational unit is a table
+* Does anyone have a definition?
+
+.center[![](static/tidy.png)]
+
+---
+
+## What does it mean to be tidy
+
+Here we have a vector of text. 
+```{r}
+lyrics <- c("Where the black clouds never lingered",
+            "The sunlight spread like honey",
+            "Through my sister's tiny hands",
+            "But while picking sour apples")    
+
+lyrics
+```
+
+---
+
+## Packages!
+
+```{r eval=F}
+library(tidyverse)
+library(tidytext)
+#devtools::install_github("josiahparry/geniusR")
+library(geniusR)
+```
+
+
+---
+
+## Tidy Song Lyrics
+
+* Tidy data works in a table structure. 
+* We now have a tidy table where our unit is a line in a song.
+* Ready for tidytext analysis
+* Tidy text data like this is what inspired me to write `geniusR`.
+
+```{r}
+lyrics_df <- tibble(lyric = lyrics,
+                    line = 1:4)
+
+lyrics_df
+```
+
+---
+
+class: center, middle
+
+
+# `geniusR`
+
+---
+# `geniusR` 
+
+* Inspired by:
+  - [Text Mining with R](https://www.tidytextmining.com/)
+  - & Kendrick Lamar's pulitizer prize winning [DAMN.](https://www.theverge.com/2018/4/16/17244222/kendrick-lamar-pulitzer-first-non-classical-non-jazz-artist)
+* Problem: No way I'm copying & pasting 14 songs' lyrics from the internet
+* Solution: Spend way too long making a package to do just that. 
+
+---
+
+# Guiding Principles
+
+* ALL DATA SHOULD BE **TIDY** FROM THE GET GO
+* Functions should be `%>%`-able, or `map()`-able
+* Functions should be simple to understand and use
+
+Note: if you feel a function acts otherwise, please submit an issue `r emo::ji("grin")`
+
+---
+
+# `geniusR` functionality 
+
+*This package serves 1 function:*
+  - functionally provide you with song lyrics which are ready for tidy text analysis. 
+
+#### 3 Key Functions:
+
+* `genius_lyrics()`: gets a single song
+* `genius_album()`: gets a whole album
+* `add_genius()`: add lyrics to a tibble with a column of artist name and a column with album, or track names (one or the other)
+
+---
+
+# `genius_lyrics()`
+
+```{r}
+anonanimal <- genius_lyrics(artist = "Andrew Bird", song = "Anonanimal")
+
+head(anonanimal)
+```
+
+---
+
+# `genius_album()` 
+
+This will be the most useful as it returns whole albums in one call.
+
+```{r}
+channel_orange <- genius_album("Frank Ocean", "channel ORANGE")
+
+channel_orange
+```
+---
+
+# What songs are in the album?
+
+```{r}
+channel_orange %>% 
+  distinct(track_title)
+```
+---
+
+## Which song is the longest (lyrically)?
+
+```{r}
+channel_orange %>% 
+  count(track_title) %>% 
+  arrange(-n)
+```
+
+---
+
+# Let's get tidy (tokenization)
+
+* Individual unit of speech or writing.
+* `unigram == word`
+
+```{r}
+orange_words <- channel_orange %>% 
+  unnest_tokens(word, lyric)
+
+orange_words
+```
+---
+
+# Most common words?
+
+```{r}
+orange_words %>% 
+  count(word) %>%
+  arrange(-n)
+```
+
+---
+
+##_"the"_ & _"a"_ are uniformative!
+
+- These are *stop words*: words with little meaning
+- We can remove them before an analysis to focus on _"important"_ words
+
+```{r}
+get_stopwords()
+```
+
+---
+
+## Removing Stop Words
+
+We can focus our analysis on word that carry more meaning
+
+```{r}
+orange_counts <- orange_words %>% 
+  anti_join(get_stopwords()) %>% 
+  count(word) %>% 
+  arrange(-n)
+
+orange_counts
+```
+
+---
+
+## Plot Common Words
+
+```{r}
+orange_counts %>% 
+  top_n(10, n) %>% 
+  mutate(word = fct_reorder(word, n)) %>% 
+  ggplot(aes(word, n)) +
+  coord_flip() +
+  geom_col() + 
+  my_theme()
+```
+
+---
+
+## Sentiment
+
+* Words have meaning and associations
+* Sentiment is a feeling or emotion
+* There are many attempts to quantify this in words
+
+.pull-left[
+```{r}
+get_sentiments("afinn")
+```
+]
+.pull-right[
+```{r}
+get_sentiments("bing") 
+```
+]
+
+---
+
+
+## Sentiment lexicons
+
+.pull-left[
+```{r}
+get_sentiments("nrc")
+```
+]
+.pull-right[
+```{r}
+get_sentiments("loughran") 
+```
+]
+
+---
+
+## Song Sentiment
+
+* Evaluate a song as the sum of the sentiment of individual words (tokens)
+* Obtain sentiment by joining sentiment to song lyrics
+
+```{r}
+song_sentiment <- orange_words %>% 
+  inner_join(get_sentiments("bing")) %>%
+  group_by(track_n) %>% 
+  count(sentiment, word)
+
+song_sentiment
+
+```
+
+---
+
+## Visualizing Song Sentiment 
+
+```{r}
+song_sentiment %>%
+  group_by(sentiment) %>% 
+  top_n(10, n) %>% 
+  ggplot(aes(fct_reorder(word, n), n, fill = sentiment)) +
+  geom_col() + coord_flip() + 
+  facet_wrap(~sentiment, scales = "free") + my_theme()
+```
+
+
+---
+
+## Calculating Overall Song Sentiment 
+
+* Count of total positive & negative words per song
+
+```{r}
+orange_words %>%  
+  inner_join(get_sentiments("bing")) %>% # again, identify our sentiment via join
+  count(track_n, sentiment) # Count pos/neg words by song
+
+```
+
+---
+
+## Calculating Overall Song Sentiment
+
+* sometimes you need to make a mess to get clean
+
+```{r}
+orange_words %>%  
+  inner_join(get_sentiments("bing")) %>% # again, identify our sentiment via join
+  count(track_n, sentiment) %>% # Count pos/neg words by song
+  spread(sentiment, n, fill = 0) # Create pos/neg count columns
+```
+
+---
+
+## Calculating Overall Song Sentiment
+
+```{r}
+orange_sentiment <- orange_words %>%  
+  inner_join(get_sentiments("bing")) %>% # again, identify our sentiment via join
+  count(track_n, sentiment) %>% # Count pos/neg words by song
+  spread(sentiment, n, fill = 0) %>% # Create pos/neg count columns
+  mutate(sentiment = positive - negative)  # calculate sentiment
+
+head(orange_sentiment)
+
+```
+
+---
+
+## Visualize Sentiment Over an Album
+
+```{r}
+orange_sentiment %>% 
+  ggplot(aes(track_n, sentiment, fill = sentiment)) + 
+  geom_col() + 
+  my_theme()
+  
+```
+
+---
+
+## Comparing Artists: `add_genius()`
+
+* Used to build on a data frame with artist and album/track information 
+
+```{r message=FALSE, warning=FALSE}
+albums <- tribble(~artist, ~album,
+                  "Beyonce", "Lemonade",
+                  "Andrew Bird", "Noble Beast",
+                  "Drive By Truckers", "American Band") %>% 
+  add_genius(artist, album, "album")
+
+head(albums)
+```
+
+---
+
+## Which album has the most words?
+
+```{r}
+albums %>% 
+  unnest_tokens(word, lyric) %>% 
+  count(artist) %>% 
+  arrange(-n)
+```
+
+---
+
+### Most Common Words? (w/ stop words)
+
+```{r}
+albums %>% 
+  unnest_tokens(word, lyric) %>% 
+  count(artist, word) %>% 
+  arrange(-n) %>% 
+  head()
+```
+
+---
+
+### Most Common Words? (w/out stop words)
+
+```{r}
+album_words <- albums %>% 
+  unnest_tokens(word, lyric) %>% 
+  anti_join(get_stopwords()) %>% 
+  count(artist, word) %>% 
+  arrange(-n)
+
+head(album_words)
+```
+
+
+---
+
+## Visualizing Most Common Words 
+
+```{r}
+album_words %>% 
+  group_by(artist) %>% 
+  top_n(10, n) %>% 
+  ggplot(aes(fct_reorder(word, n), n, fill = artist)) + 
+  geom_col() + my_theme() +
+  coord_flip() + facet_wrap(~artist, scales = "free")
+```
+
+---
+
+## Sentiment!
+
+```{r}
+album_sentiment <- albums %>% 
+  unnest_tokens(word, lyric) %>% 
+  anti_join(get_stopwords()) %>% 
+  inner_join(get_sentiments("bing"))
+
+album_sentiment
+```
+
+---
+
+## Visualizing Sentiment
+
+```{r}
+album_sentiment %>% 
+  count(artist, sentiment, word) %>% 
+  spread(sentiment, n, fill = 0) %>% # Create pos/neg count columns
+  mutate(sentiment = positive - negative) %>%  # calculate sentiment
+  group_by(artist) %>% 
+  top_n(8, abs(sentiment)) %>% 
+  ggplot(aes(fct_reorder(word, sentiment), sentiment, fill = sentiment)) + 
+  geom_col() + my_theme() + 
+  coord_flip() +  facet_wrap(~artist, scales = "free")
+```
+
+
+---
+
+## Documents
+
+- Term frequency
+  - Frequent words are upweighted
+- Inverse document frequency
+  - less frequent words are given more weight
+
+$$idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$$
+
+tf-idf is about comparing **documents** within a **collection**.
+
+---
+
+## Finding `tf-idf`
+
+* `bind_tf_idf()`: does all of the hard work calculating `tf`, `idf`, & `tf_idf`
+  - 4 arguments
+    - `tbl`: the `%>%` takes care of it
+    - `term`: Our token (word)
+    - `document`: In this case, artist
+    - `n`: The count of the word
+
+---
+
+## Finding `tf-idf`
+```{r}
+album_tf_idf <- album_words %>% 
+  bind_tf_idf(word, artist, n) %>% 
+  arrange(-tf_idf)
+
+head(album_tf_idf)
+```
+
+---
+
+## Visualizing `tf-idf`
+
+```{r}
+album_tf_idf %>% 
+  group_by(artist) %>% 
+  top_n(10, tf_idf) %>% 
+  ggplot(aes(fct_reorder(word, tf_idf), tf_idf, fill = artist)) + 
+  geom_col() + my_theme() + 
+  coord_flip() + facet_wrap(~artist, scales = "free")
+```
+
+
+---
+
+class: center, middle
+
+
+# Give it a try!
+
+---
+
+## Process
+
+* Create a tibble with artist & album name
+* `%>%` to `add_genius()`
+* Tokenize
+* Remove Stop Words
+* Sentiment Analysis
+  * add sentiment
+  * count
+  * spread & mutate
+  * plot!
+* `tf-idf`
+  * count
+  * `bind_tf_idf()`
+  * plot!
+---

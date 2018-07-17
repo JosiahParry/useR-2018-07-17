@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tidy Lyrical Analysis</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Josiah Parry" />
+    <link href="presentation_files/remark-css/robot.css" rel="stylesheet" />
+    <link href="presentation_files/remark-css/robot-fonts.css" rel="stylesheet" />
+    <link href="presentation_files/font-awesome/css/fa-svg-with-js.css" rel="stylesheet" />
+    <script src="presentation_files/font-awesome/js/fontawesome-all.min.js"></script>
+    <script src="presentation_files/font-awesome/js/fa-v4-shims.min.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Tidy Lyrical Analysis
+## An introduction to Tidytext through geniusR
+### Josiah Parry
+### 2018/07/15
+
+---
+
+
+
+
+
+
+
+
+## Talk Overview
+
+
+* Who I am
+* What does it mean to be tidy
+* `geniusR`
+* `tidytext`
+* Tidytext Analysis With geniusR
+* Give it a go!
+  - Workshopping tidy text analysis
+
+
+---
+background-image: url("static/wererising.jpg")
+background-position: bottom
+background-size: contain
+background-transparency: 50%
+
+## Some things about me
+
+
+* Plymouth State '18, Sociology, GIS, Math 
+* Esspresso connoisseur
+* NH Data Manager @ NextGen America #youthvote
+  - Remember to vote Nov. 6th!
+* MS Urban Informatics at Northeastern in September
+  
+---
+
+## What does it mean to be tidy?
+
+* I will refer you to [this beautiful paper](https://vita.had.co.nz/papers/tidy-data.pdf) by Hadley Wickham
+* The short of it is that:
+  - Each variable is a column
+  - Each observation is a row
+  - Each type of observational unit is a table
+* Does anyone have a definition?
+
+.center[![](static/tidy.png)]
+
+---
+
+## What does it mean to be tidy
+
+Here we have a vector of text. 
+
+```r
+lyrics &lt;- c("Where the black clouds never lingered",
+            "The sunlight spread like honey",
+            "Through my sister's tiny hands",
+            "But while picking sour apples")    
+
+lyrics
+```
+
+```
+## [1] "Where the black clouds never lingered"
+## [2] "The sunlight spread like honey"       
+## [3] "Through my sister's tiny hands"       
+## [4] "But while picking sour apples"
+```
+
+---
+
+## Packages!
+
+
+```r
+library(tidyverse)
+library(tidytext)
+#devtools::install_github("josiahparry/geniusR")
+library(geniusR)
+```
+
+
+---
+
+## Tidy Song Lyrics
+
+* Tidy data works in a table structure. 
+* We now have a tidy table where our unit is a line in a song.
+* Ready for tidytext analysis
+* Tidy text data like this is what inspired me to write `geniusR`.
+
+
+```r
+lyrics_df &lt;- tibble(lyric = lyrics,
+                    line = 1:4)
+
+lyrics_df
+```
+
+```
+## # A tibble: 4 x 2
+##   lyric                                  line
+##   &lt;chr&gt;                                 &lt;int&gt;
+## 1 Where the black clouds never lingered     1
+## 2 The sunlight spread like honey            2
+## 3 Through my sister's tiny hands            3
+## 4 But while picking sour apples             4
+```
+
+---
+
+class: center, middle
+
+
+# `geniusR`
+
+---
+# `geniusR` 
+
+* Inspired by:
+  - [Text Mining with R](https://www.tidytextmining.com/)
+  - &amp; Kendrick Lamar's pulitizer prize winning [DAMN.](https://www.theverge.com/2018/4/16/17244222/kendrick-lamar-pulitzer-first-non-classical-non-jazz-artist)
+* Problem: No way I'm copying &amp; pasting 14 songs' lyrics from the internet
+* Solution: Spend way too long making a package to do just that. 
+
+---
+
+# Guiding Principles
+
+* ALL DATA SHOULD BE **TIDY** FROM THE GET GO
+* Functions should be `%&gt;%`-able, or `map()`-able
+* Functions should be simple to understand and use
+
+Note: if you feel a function acts otherwise, please submit an issue 😁
+
+---
+
+# `geniusR` functionality 
+
+*This package serves 1 function:*
+  - functionally provide you with song lyrics which are ready for tidy text analysis. 
+
+#### 3 Key Functions:
+
+* `genius_lyrics()`: gets a single song
+* `genius_album()`: gets a whole album
+* `add_genius()`: add lyrics to a tibble with a column of artist name and a column with album, or track names (one or the other)
+
+---
+
+# `genius_lyrics()`
+
+
+```r
+anonanimal &lt;- genius_lyrics(artist = "Andrew Bird", song = "Anonanimal")
+
+head(anonanimal)
+```
+
+```
+## # A tibble: 6 x 3
+##   track_title lyric                                                   line
+##   &lt;chr&gt;       &lt;chr&gt;                                                  &lt;int&gt;
+## 1 Anonanimal  I see a sea anemone                                        1
+## 2 Anonanimal  The enemy                                                  2
+## 3 Anonanimal  See a sea anemone                                          3
+## 4 Anonanimal  And that'll be the end of me                               4
+## 5 Anonanimal  While the vicious fish was caught unawares in the ten…     5
+## 6 Anonanimal  Underneath her tender gills                                6
+```
+
+---
+
+# `genius_album()` 
+
+This will be the most useful as it returns whole albums in one call.
+
+
+```r
+channel_orange &lt;- genius_album("Frank Ocean", "channel ORANGE")
+```
+
+```
+## Joining, by = c("track_title", "track_n", "track_url")
+```
+
+```r
+channel_orange
+```
+
+```
+## # A tibble: 729 x 4
+##    track_title      track_n lyric                                     line
+##    &lt;chr&gt;              &lt;int&gt; &lt;chr&gt;                                    &lt;int&gt;
+##  1 Start                  1 They look like twins                         1
+##  2 Start                  1 That was embarrassing                        2
+##  3 Thinkin Bout You       2 A tornado flew around my room before yo…     1
+##  4 Thinkin Bout You       2 Excuse the mess it made, it usually doe…     2
+##  5 Thinkin Bout You       2 Southern California, much like Arizona       3
+##  6 Thinkin Bout You       2 My eyes don't shed tears, but boy, they…     4
+##  7 Thinkin Bout You       2 I'm thinkin' 'bout you (Ooh no, no, no)      5
+##  8 Thinkin Bout You       2 I've been thinkin' bout you (You know, …     6
+##  9 Thinkin Bout You       2 I've been thinkin' bout you, do you thi…     7
+## 10 Thinkin Bout You       2 Do ya, do ya?                                8
+## # ... with 719 more rows
+```
+---
+
+# What songs are in the album?
+
+
+```r
+channel_orange %&gt;% 
+  distinct(track_title)
+```
+
+```
+## # A tibble: 17 x 1
+##    track_title                             
+##    &lt;chr&gt;                                   
+##  1 Start                                   
+##  2 Thinkin Bout You                        
+##  3 Fertilizer                              
+##  4 Sierra Leone                            
+##  5 Sweet Life                              
+##  6 Not Just Money (Ft. Rosie Watson)       
+##  7 Super Rich Kids (Ft. Earl Sweatshirt)   
+##  8 Pilot Jones                             
+##  9 Crack Rock                              
+## 10 Pyramids                                
+## 11 Lost                                    
+## 12 White (Album Version) (Ft. John Mayer)  
+## 13 Monks                                   
+## 14 Bad Religion                            
+## 15 Pink Matter (Ft. André 3000)            
+## 16 Forrest Gump                            
+## 17 End/Golden Girl (Ft. Tyler, The Creator)
+```
+---
+
+## Which song is the longest (lyrically)?
+
+
+```r
+channel_orange %&gt;% 
+  count(track_title) %&gt;% 
+  arrange(-n)
+```
+
+```
+## # A tibble: 17 x 2
+##    track_title                                  n
+##    &lt;chr&gt;                                    &lt;int&gt;
+##  1 End/Golden Girl (Ft. Tyler, The Creator)    86
+##  2 Super Rich Kids (Ft. Earl Sweatshirt)       84
+##  3 Pyramids                                    83
+##  4 Monks                                       60
+##  5 Pink Matter (Ft. André 3000)                57
+##  6 Lost                                        54
+##  7 Bad Religion                                50
+##  8 Sweet Life                                  49
+##  9 Forrest Gump                                45
+## 10 Crack Rock                                  39
+## 11 Pilot Jones                                 33
+## 12 Thinkin Bout You                            33
+## 13 Sierra Leone                                29
+## 14 Not Just Money (Ft. Rosie Watson)           19
+## 15 Fertilizer                                   5
+## 16 Start                                        2
+## 17 White (Album Version) (Ft. John Mayer)       1
+```
+
+---
+
+# Let's get tidy (tokenization)
+
+* Individual unit of speech or writing.
+* `unigram == word`
+
+
+```r
+orange_words &lt;- channel_orange %&gt;% 
+  unnest_tokens(word, lyric)
+
+orange_words
+```
+
+```
+## # A tibble: 4,605 x 4
+##    track_title      track_n  line word        
+##    &lt;chr&gt;              &lt;int&gt; &lt;int&gt; &lt;chr&gt;       
+##  1 Start                  1     1 they        
+##  2 Start                  1     1 look        
+##  3 Start                  1     1 like        
+##  4 Start                  1     1 twins       
+##  5 Start                  1     2 that        
+##  6 Start                  1     2 was         
+##  7 Start                  1     2 embarrassing
+##  8 Thinkin Bout You       2     1 a           
+##  9 Thinkin Bout You       2     1 tornado     
+## 10 Thinkin Bout You       2     1 flew        
+## # ... with 4,595 more rows
+```
+---
+
+# Most common words?
+
+
+```r
+orange_words %&gt;% 
+  count(word) %&gt;%
+  arrange(-n)
+```
+
+```
+## # A tibble: 1,110 x 2
+##    word      n
+##    &lt;chr&gt; &lt;int&gt;
+##  1 the     215
+##  2 you     152
+##  3 i       112
+##  4 a        94
+##  5 my       83
+##  6 and      77
+##  7 to       75
+##  8 in       68
+##  9 me       57
+## 10 love     48
+## # ... with 1,100 more rows
+```
+
+---
+
+##_"the"_ &amp; _"a"_ are uniformative!
+
+- These are *stop words*: words with little meaning
+- We can remove them before an analysis to focus on _"important"_ words
+
+
+```r
+get_stopwords()
+```
+
+```
+## # A tibble: 175 x 2
+##    word      lexicon 
+##    &lt;chr&gt;     &lt;chr&gt;   
+##  1 i         snowball
+##  2 me        snowball
+##  3 my        snowball
+##  4 myself    snowball
+##  5 we        snowball
+##  6 our       snowball
+##  7 ours      snowball
+##  8 ourselves snowball
+##  9 you       snowball
+## 10 your      snowball
+## # ... with 165 more rows
+```
+
+---
+
+## Removing Stop Words
+
+We can focus our analysis on word that carry more meaning
+
+
+```r
+orange_counts &lt;- orange_words %&gt;% 
+  anti_join(get_stopwords()) %&gt;% 
+  count(word) %&gt;% 
+  arrange(-n)
+```
+
+```
+## Joining, by = "word"
+```
+
+```r
+orange_counts
+```
+
+```
+## # A tibble: 981 x 2
+##    word        n
+##    &lt;chr&gt;   &lt;int&gt;
+##  1 love       48
+##  2 girl       31
+##  3 working    29
+##  4 got        28
+##  5 lost       28
+##  6 know       27
+##  7 pyramid    27
+##  8 like       25
+##  9 run        22
+## 10 life       20
+## # ... with 971 more rows
+```
+
+---
+
+## Plot Common Words
+
+
+```r
+orange_counts %&gt;% 
+  top_n(10, n) %&gt;% 
+  mutate(word = fct_reorder(word, n)) %&gt;% 
+  ggplot(aes(word, n)) +
+  coord_flip() +
+  geom_col() + 
+  my_theme()
+```
+
+![](presentation_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+## Sentiment
+
+* Words have meaning and associations
+* Sentiment is a feeling or emotion
+* There are many attempts to quantify this in words
+
+.pull-left[
+
+```r
+get_sentiments("afinn")
+```
+
+```
+## # A tibble: 2,476 x 2
+##    word       score
+##    &lt;chr&gt;      &lt;int&gt;
+##  1 abandon       -2
+##  2 abandoned     -2
+##  3 abandons      -2
+##  4 abducted      -2
+##  5 abduction     -2
+##  6 abductions    -2
+##  7 abhor         -3
+##  8 abhorred      -3
+##  9 abhorrent     -3
+## 10 abhors        -3
+## # ... with 2,466 more rows
+```
+]
+.pull-right[
+
+```r
+get_sentiments("bing") 
+```
+
+```
+## # A tibble: 6,788 x 2
+##    word        sentiment
+##    &lt;chr&gt;       &lt;chr&gt;    
+##  1 2-faced     negative 
+##  2 2-faces     negative 
+##  3 a+          positive 
+##  4 abnormal    negative 
+##  5 abolish     negative 
+##  6 abominable  negative 
+##  7 abominably  negative 
+##  8 abominate   negative 
+##  9 abomination negative 
+## 10 abort       negative 
+## # ... with 6,778 more rows
+```
+]
+
+---
+
+
+## Sentiment lexicons
+
+.pull-left[
+
+```r
+get_sentiments("nrc")
+```
+
+```
+## # A tibble: 13,901 x 2
+##    word        sentiment
+##    &lt;chr&gt;       &lt;chr&gt;    
+##  1 abacus      trust    
+##  2 abandon     fear     
+##  3 abandon     negative 
+##  4 abandon     sadness  
+##  5 abandoned   anger    
+##  6 abandoned   fear     
+##  7 abandoned   negative 
+##  8 abandoned   sadness  
+##  9 abandonment anger    
+## 10 abandonment fear     
+## # ... with 13,891 more rows
+```
+]
+.pull-right[
+
+```r
+get_sentiments("loughran") 
+```
+
+```
+## # A tibble: 4,149 x 2
+##    word         sentiment
+##    &lt;chr&gt;        &lt;chr&gt;    
+##  1 abandon      negative 
+##  2 abandoned    negative 
+##  3 abandoning   negative 
+##  4 abandonment  negative 
+##  5 abandonments negative 
+##  6 abandons     negative 
+##  7 abdicated    negative 
+##  8 abdicates    negative 
+##  9 abdicating   negative 
+## 10 abdication   negative 
+## # ... with 4,139 more rows
+```
+]
+
+---
+
+## Song Sentiment
+
+* Evaluate a song as the sum of the sentiment of individual words (tokens)
+* Obtain sentiment by joining sentiment to song lyrics
+
+
+```r
+song_sentiment &lt;- orange_words %&gt;% 
+  inner_join(get_sentiments("bing")) %&gt;%
+  group_by(track_n) %&gt;% 
+  count(sentiment, word)
+```
+
+```
+## Joining, by = "word"
+```
+
+```r
+song_sentiment
+```
+
+```
+## # A tibble: 193 x 4
+## # Groups:   track_n [16]
+##    track_n sentiment word             n
+##      &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;        &lt;int&gt;
+##  1       1 negative  embarrassing     1
+##  2       1 positive  like             1
+##  3       2 negative  excuse           1
+##  4       2 negative  lying            1
+##  5       2 negative  mess             1
+##  6       2 positive  cool             1
+##  7       2 positive  cute             1
+##  8       2 positive  enough           1
+##  9       2 positive  like             2
+## 10       2 positive  love             1
+## # ... with 183 more rows
+```
+
+---
+
+## Visualizing Song Sentiment 
+
+
+```r
+song_sentiment %&gt;%
+  group_by(sentiment) %&gt;% 
+  top_n(10, n) %&gt;% 
+  ggplot(aes(fct_reorder(word, n), n, fill = sentiment)) +
+  geom_col() + coord_flip() + 
+  facet_wrap(~sentiment, scales = "free") + my_theme()
+```
+
+![](presentation_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+
+---
+
+## Calculating Overall Song Sentiment 
+
+* Count of total positive &amp; negative words per song
+
+
+```r
+orange_words %&gt;%  
+  inner_join(get_sentiments("bing")) %&gt;% # again, identify our sentiment via join
+  count(track_n, sentiment) # Count pos/neg words by song
+```
+
+```
+## Joining, by = "word"
+```
+
+```
+## # A tibble: 31 x 3
+##    track_n sentiment     n
+##      &lt;int&gt; &lt;chr&gt;     &lt;int&gt;
+##  1       1 negative      1
+##  2       1 positive      1
+##  3       2 negative      3
+##  4       2 positive      6
+##  5       3 negative      1
+##  6       4 negative      2
+##  7       4 positive      7
+##  8       5 negative      4
+##  9       5 positive     37
+## 10       6 negative      2
+## # ... with 21 more rows
+```
+
+---
+
+## Calculating Overall Song Sentiment
+
+* sometimes you need to make a mess to get clean
+
+
+```r
+orange_words %&gt;%  
+  inner_join(get_sentiments("bing")) %&gt;% # again, identify our sentiment via join
+  count(track_n, sentiment) %&gt;% # Count pos/neg words by song
+  spread(sentiment, n, fill = 0) # Create pos/neg count columns
+```
+
+```
+## Joining, by = "word"
+```
+
+```
+## # A tibble: 16 x 3
+##    track_n negative positive
+##      &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+##  1       1       1.       1.
+##  2       2       3.       6.
+##  3       3       1.       0.
+##  4       4       2.       7.
+##  5       5       4.      37.
+##  6       6       2.       5.
+##  7       7      26.      44.
+##  8       8       5.       1.
+##  9       9      33.       2.
+## 10      10      12.      20.
+## 11      11      39.      20.
+## 12      13       5.      22.
+## 13      14       9.      23.
+## 14      15      20.      19.
+## 15      16       6.       3.
+## 16      17      13.      28.
+```
+
+---
+
+## Calculating Overall Song Sentiment
+
+
+```r
+orange_sentiment &lt;- orange_words %&gt;%  
+  inner_join(get_sentiments("bing")) %&gt;% # again, identify our sentiment via join
+  count(track_n, sentiment) %&gt;% # Count pos/neg words by song
+  spread(sentiment, n, fill = 0) %&gt;% # Create pos/neg count columns
+  mutate(sentiment = positive - negative)  # calculate sentiment
+```
+
+```
+## Joining, by = "word"
+```
+
+```r
+head(orange_sentiment)
+```
+
+```
+## # A tibble: 6 x 4
+##   track_n negative positive sentiment
+##     &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+## 1       1       1.       1.        0.
+## 2       2       3.       6.        3.
+## 3       3       1.       0.       -1.
+## 4       4       2.       7.        5.
+## 5       5       4.      37.       33.
+## 6       6       2.       5.        3.
+```
+
+---
+
+## Visualize Sentiment Over an Album
+
+
+```r
+orange_sentiment %&gt;% 
+  ggplot(aes(track_n, sentiment, fill = sentiment)) + 
+  geom_col() + 
+  my_theme()
+```
+
+![](presentation_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+
+---
+
+## Comparing Artists: `add_genius()`
+
+* Used to build on a data frame with artist and album/track information 
+
+
+```r
+albums &lt;- tribble(~artist, ~album,
+                  "Beyonce", "Lemonade",
+                  "Andrew Bird", "Noble Beast",
+                  "Drive By Truckers", "American Band") %&gt;% 
+  add_genius(artist, album, "album")
+
+head(albums)
+```
+
+```
+## # A tibble: 6 x 6
+##   artist  album    track_title       track_n lyric                    line
+##   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;               &lt;int&gt; &lt;chr&gt;                   &lt;int&gt;
+## 1 Beyonce Lemonade PRAY YOU CATCH ME       1 You can taste the dish…     1
+## 2 Beyonce Lemonade PRAY YOU CATCH ME       1 It's all over your bre…     2
+## 3 Beyonce Lemonade PRAY YOU CATCH ME       1 But even that's a test      3
+## 4 Beyonce Lemonade PRAY YOU CATCH ME       1 Constantly aware of it…     4
+## 5 Beyonce Lemonade PRAY YOU CATCH ME       1 My lonely ear pressed …     5
+## 6 Beyonce Lemonade PRAY YOU CATCH ME       1 Pray to catch you whis…     6
+```
+
+---
+
+## Which album has the most words?
+
+
+```r
+albums %&gt;% 
+  unnest_tokens(word, lyric) %&gt;% 
+  count(artist) %&gt;% 
+  arrange(-n)
+```
+
+```
+## # A tibble: 3 x 2
+##   artist                n
+##   &lt;chr&gt;             &lt;int&gt;
+## 1 Beyonce            4598
+## 2 Drive By Truckers  2822
+## 3 Andrew Bird        1959
+```
+
+---
+
+### Most Common Words? (w/ stop words)
+
+
+```r
+albums %&gt;% 
+  unnest_tokens(word, lyric) %&gt;% 
+  count(artist, word) %&gt;% 
+  arrange(-n) %&gt;% 
+  head()
+```
+
+```
+## # A tibble: 6 x 3
+##   artist            word      n
+##   &lt;chr&gt;             &lt;chr&gt; &lt;int&gt;
+## 1 Beyonce           i       236
+## 2 Beyonce           you     233
+## 3 Drive By Truckers the     178
+## 4 Andrew Bird       the     116
+## 5 Beyonce           me      102
+## 6 Beyonce           and     100
+```
+
+---
+
+### Most Common Words? (w/out stop words)
+
+
+```r
+album_words &lt;- albums %&gt;% 
+  unnest_tokens(word, lyric) %&gt;% 
+  anti_join(get_stopwords()) %&gt;% 
+  count(artist, word) %&gt;% 
+  arrange(-n)
+```
+
+```
+## Joining, by = "word"
+```
+
+```r
+head(album_words)
+```
+
+```
+## # A tibble: 6 x 3
+##   artist  word      n
+##   &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;
+## 1 Beyonce love     82
+## 2 Beyonce oh       67
+## 3 Beyonce like     51
+## 4 Beyonce slay     49
+## 5 Beyonce okay     42
+## 6 Beyonce ain't    40
+```
+
+
+---
+
+## Visualizing Most Common Words 
+
+
+```r
+album_words %&gt;% 
+  group_by(artist) %&gt;% 
+  top_n(10, n) %&gt;% 
+  ggplot(aes(fct_reorder(word, n), n, fill = artist)) + 
+  geom_col() + my_theme() +
+  coord_flip() + facet_wrap(~artist, scales = "free")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+
+---
+
+## Sentiment!
+
+
+```r
+album_sentiment &lt;- albums %&gt;% 
+  unnest_tokens(word, lyric) %&gt;% 
+  anti_join(get_stopwords()) %&gt;% 
+  inner_join(get_sentiments("bing"))
+```
+
+```
+## Joining, by = "word"
+## Joining, by = "word"
+```
+
+```r
+album_sentiment
+```
+
+```
+## # A tibble: 890 x 7
+##    artist  album    track_title       track_n  line word       sentiment
+##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;               &lt;int&gt; &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;    
+##  1 Beyonce Lemonade PRAY YOU CATCH ME       1     1 dishonesty negative 
+##  2 Beyonce Lemonade PRAY YOU CATCH ME       1     5 lonely     negative 
+##  3 Beyonce Lemonade PRAY YOU CATCH ME       1    13 hurt       negative 
+##  4 Beyonce Lemonade PRAY YOU CATCH ME       1    13 like       positive 
+##  5 Beyonce Lemonade PRAY YOU CATCH ME       1    13 smile      positive 
+##  6 Beyonce Lemonade PRAY YOU CATCH ME       1    15 concern    negative 
+##  7 Beyonce Lemonade PRAY YOU CATCH ME       1    15 ease       positive 
+##  8 Beyonce Lemonade PRAY YOU CATCH ME       1    24 love       positive 
+##  9 Beyonce Lemonade HOLD UP                 2     1 love       positive 
+## 10 Beyonce Lemonade HOLD UP                 2     1 like       positive 
+## # ... with 880 more rows
+```
+
+---
+
+## Visualizing Sentiment
+
+
+```r
+album_sentiment %&gt;% 
+  count(artist, sentiment, word) %&gt;% 
+  spread(sentiment, n, fill = 0) %&gt;% # Create pos/neg count columns
+  mutate(sentiment = positive - negative) %&gt;%  # calculate sentiment
+  group_by(artist) %&gt;% 
+  top_n(8, abs(sentiment)) %&gt;% 
+  ggplot(aes(fct_reorder(word, sentiment), sentiment, fill = sentiment)) + 
+  geom_col() + my_theme() + 
+  coord_flip() +  facet_wrap(~artist, scales = "free")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
+
+
+---
+
+## Documents
+
+- Term frequency
+  - Frequent words are upweighted
+- Inverse document frequency
+  - less frequent words are given more weight
+
+`$$idf(\text{term}) = \ln{\left(\frac{n_{\text{documents}}}{n_{\text{documents containing term}}}\right)}$$`
+
+tf-idf is about comparing **documents** within a **collection**.
+
+---
+
+## Finding `tf-idf`
+
+* `bind_tf_idf()`: does all of the hard work calculating `tf`, `idf`, &amp; `tf_idf`
+  - 4 arguments
+    - `tbl`: the `%&gt;%` takes care of it
+    - `term`: Our token (word)
+    - `document`: In this case, artist
+    - `n`: The count of the word
+
+---
+
+## Finding `tf-idf`
+
+```r
+album_tf_idf &lt;- album_words %&gt;% 
+  bind_tf_idf(word, artist, n) %&gt;% 
+  arrange(-tf_idf)
+
+head(album_tf_idf)
+```
+
+```
+## # A tibble: 6 x 6
+##   artist  word        n      tf   idf  tf_idf
+##   &lt;chr&gt;   &lt;chr&gt;   &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Beyonce slay       49 0.0205  1.10  0.0226 
+## 2 Beyonce okay       42 0.0176  1.10  0.0193 
+## 3 Beyonce sorry      35 0.0147  1.10  0.0161 
+## 4 Beyonce daddy      27 0.0113  1.10  0.0124 
+## 5 Beyonce oh         67 0.0281  0.405 0.0114 
+## 6 Beyonce freedom    21 0.00880 1.10  0.00967
+```
+
+---
+
+## Visualizing `tf-idf`
+
+
+```r
+album_tf_idf %&gt;% 
+  group_by(artist) %&gt;% 
+  top_n(10, tf_idf) %&gt;% 
+  ggplot(aes(fct_reorder(word, tf_idf), tf_idf, fill = artist)) + 
+  geom_col() + my_theme() + 
+  coord_flip() + facet_wrap(~artist, scales = "free")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
+
+
+---
+
+class: center, middle
+
+
+# Give it a try!
+
+---
+
+## Process
+
+* Create a tibble with artist &amp; album name
+* `%&gt;%` to `add_genius()`
+* Tokenize
+* Remove Stop Words
+* Sentiment Analysis
+  * add sentiment
+  * count
+  * spread &amp; mutate
+  * plot!
+* `tf-idf`
+  * count
+  * `bind_tf_idf()`
+  * plot!
+---
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
